@@ -1,7 +1,7 @@
 # MacOS Configuration
 The configuration is for
 1. Install boost libs: `brew install boost-python3` (My current version is 1.73.0)
-2. Install JUCE (Currently I'm still using JUCE 7)
+2. Install JUCE (Currently I'm still using JUCE 5)
 3. Make sure have python3.8 installed
 4. Get RenderMan from https://github.com/fedden/RenderMan
 5. Open `RenderMan-py36.jucer` in the project folder, generate XCode project.
