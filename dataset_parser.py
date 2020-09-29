@@ -12,8 +12,8 @@ def get_patch(dataset_path):
             else:
                 character = []
 
-            if "Preset dir" in preset["Meta"]:
-                path = preset["Meta"]["Preset dir"]
+            if "Preset dir" in preset:
+                path = preset["Preset dir"]
             else:
                 path = ''
 
@@ -34,7 +34,7 @@ def character_to_binary(character):
     Return
     - A binray list
     '''
-    binary = [0] * 22
+    binary = [0] * (len(CHARACTER_TABLE) * 2)
     for idx, pair in enumerate(CHARACTER_TABLE):
         word_1, word_2 = pair
         if word_1 in character:
