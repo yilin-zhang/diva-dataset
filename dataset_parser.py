@@ -19,7 +19,7 @@ def get_patch(dataset_path):
 
             midi = preset["MIDI"]
             for key in PARAM_DICT:
-                if PARAM_DICT[key] in preset:
+                if PARAM_DICT[key] in midi:
                     patch.append((key, float(midi[PARAM_DICT[key]])))
                 else:
                     patch.append((key, DEFAULT_PARAMS[PARAM_DICT[key]]))

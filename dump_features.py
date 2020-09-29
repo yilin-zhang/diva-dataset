@@ -132,10 +132,7 @@ def export_audio():
             if binary_character == [0]*22:
                 continue
 
-            engine = rm.RenderEngine(sampleRate, bufferSize, fftSize)
-            engine.load_plugin(plugin_path)
             engine.set_patch(patch)
-            # engine.render_patch(midiNote, midiVelocity, noteLength, renderLength)
             engine.render_patch(midiNote, midiVelocity, noteLength, renderLength)
             audio = np.array(engine.get_audio_frames(), dtype=np.float32)
 
