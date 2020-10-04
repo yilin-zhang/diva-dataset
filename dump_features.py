@@ -119,10 +119,17 @@ def dump_features():
 
 def export_audio():
     path_prefix = '/Users/naotake/Datasets/diva/'
+    dataset_prefix = 'diva-preset-audio-dataset'
 
-    Path('audio').mkdir(parents=True, exist_ok=True)
-    with open('audio/meta.csv', 'w') as csvfile:
+    Path(dataset_prefix).mkdir(parents=True, exist_ok=True)
+    with open(os.path.join(dataset_prefix, 'meta.csv'), 'w') as csvfile:
         meta_writer = csv.writer(csvfile)
+        meta_writer.writerow(["Bright", "Dark", "Dynamic", "Static",
+                              "Constant", "Moving", "Soft", "Aggressive",
+                              "Harmonic", "Inharmonic", "Phat", "Thin",
+                              "Clean", "Dirty", "Wide", "Narrow",
+                              "Modern", "Vintage", "Acoustic", "Electric",
+                              "Natural", "Synthetic", "path"])
         i = 0
         for patch, path, character in get_patch("dataset/dataset.json"):
             if not character:
@@ -137,16 +144,18 @@ def export_audio():
             audio = np.array(engine.get_audio_frames(), dtype=np.float32)
 
             if not path:
-                export_path = 'audio/other/' + str(i) + '.wav'
+                csv_record_path = 'other/' + str(i) + '.wav'
+                export_path = os.path.join(dataset_prefix, csv_record_path)
             else:
-                export_path = 'audio/' + os.path.splitext(path[len(path_prefix):])[0] + '.wav'
+                csv_record_path = os.path.splitext(path[len(path_prefix):])[0] + '.wav'
+                export_path = os.path.join(dataset_prefix, csv_record_path)
 
             Path(os.path.dirname(export_path)).mkdir(parents=True, exist_ok=True)
 
             scipy.io.wavfile.write(export_path, sampleRate, audio)
 
             meta_row = binary_character
-            meta_row.append(export_path)
+            meta_row.append(csv_record_path)
 
             meta_writer.writerow(meta_row)
 
