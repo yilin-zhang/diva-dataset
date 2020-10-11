@@ -159,6 +159,7 @@ def export_audio():
 
             meta_writer.writerow(meta_row)
 
+            print("Iteration:", i)
             i += 1
 
 

@@ -187,4 +187,4 @@ if __name__ == '__main__':
     # plot_feature_matrix(features[2100:2210, :])
 
     # plot feature pairs
-    # plot_dual_features(features, binary_characters)
+    plot_dual_features(features, binary_characters)
