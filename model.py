@@ -32,8 +32,6 @@ class MelDataset(Dataset):
                                                      features.size(1),
                                                      features.size(2)))
 
-        # print('features size:', self.features.size())
-
     def __getitem__(self, index):
         return self.features[index], self.labels[index]
 
@@ -138,23 +136,37 @@ class MyCNN(nn.Module):
         x11 = self.softmax(self.fc2_11(x))
 
         return x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
-        # return x
-        # x = F.relu(self.lin1(x))
-        # x = F.relu(self.lin2(x))
-        # x = F.relu(self.lin3(x))
-        # x = F.relu(self.lin4(x))
-        # x1 = self.softmax(self.lin5_1(x))
-        # x2 = self.softmax(self.lin5_1(x))
-        # x3 = self.softmax(self.lin5_1(x))
-        # x4 = self.softmax(self.lin5_1(x))
-        # x5 = self.softmax(self.lin5_1(x))
-        # x6 = self.softmax(self.lin5_1(x))
-        # x7 = self.softmax(self.lin5_1(x))
-        # x8 = self.softmax(self.lin5_1(x))
-        # x9 = self.softmax(self.lin5_1(x))
-        # x10 = self.softmax(self.lin5_1(x))
-        # x11 = self.softmax(self.lin5_1(x))
-        # return x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
+
+
+class MyAutoEncoder(nn.Module):
+    def __init__(self):
+        super(MyAutoEncoder, self).__init__()
+        self.encoder = nn.Sequential( # like the Composition layer you built
+            nn.Conv2d(1, 16, 3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(16, 32, 3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, 7)
+        )
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(64, 32, 7),
+            nn.ReLU(),
+            nn.ConvTranspose2d(32, 16, 3, padding=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(16, 1, 3, padding=1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
+
+    def encode(self, x):
+        return self.encoder(x)
+
+    def decode(self, x):
+        return self.decode(x)
 
 
 def train(device, train_set, val_set, num_epochs, batch_size, net, writer_path):
@@ -168,7 +180,7 @@ def train(device, train_set, val_set, num_epochs, batch_size, net, writer_path):
     writer = SummaryWriter(writer_path)
 
     for epoch in trange(num_epochs):
-        # print('epoch:', epoch, '...')
+        epoch_loss = 0
         for i, (inputs, labels) in enumerate(train_loader):
             inputs = inputs.to(device)
             labels = labels.to(device)
@@ -181,15 +193,19 @@ def train(device, train_set, val_set, num_epochs, batch_size, net, writer_path):
             for j in range(11):
                 loss.append(criterion(out[j], labels[:, j]))
             loss = sum(loss)
+
+            epoch_loss += loss
+
             loss.backward()
             optimizer.step()
 
-            writer.add_scalar('Loss/train', loss, epoch)
+        epoch_loss /= (i + 1)
+        writer.add_scalar('Loss/train', epoch_loss, epoch)
 
         # validate every 5 epochs
-        if ((epoch + 1) % 5 == 0):
-            # val_inputs, val_labels = iter(val_loader).next()
+        if (epoch + 1) % 5 == 0:
             accuracies = [[] for i in range(11)]
+            val_loss = []
             # NOTE: Since I set only one batch for validation, the for loop
             # is only for one iteration
             for val_inputs, val_labels in val_loader:
@@ -197,31 +213,76 @@ def train(device, train_set, val_set, num_epochs, batch_size, net, writer_path):
                 val_labels = val_labels.to(device)
 
                 val_out = net(val_inputs)
-                val_loss = []
                 for j in range(11):
                     val_loss.append(criterion(val_out[j], val_labels[:, j]))
                     pred = val_out[j].argmax(dim=1)
+                    print(f'predict {float(sum(pred == 0))/val_labels.size(0)*100}% as 0')
                     corrects = (pred == val_labels[:, j])
                     accuracies[j].append(corrects.sum().float() / float(val_labels.size(0)))
                 val_loss = sum(val_loss)
 
             writer.add_scalar('Loss/val', val_loss, epoch)
             accuracies = torch.tensor(accuracies)
-            # print(f'accuracy size: {accuracies.size()}')
             accuracies = torch.mean(accuracies, dim=1)
             for k in range(11):
-                # print(f'accuracy {k}: {accuracies[k]}')
                 writer.add_scalar(f'Accuracy/feature_{k}', accuracies[k], epoch)
                 print(f'Accuracy/feature_{k}: {accuracies[k]}')
 
-        # print('finished')
-
-    writer.flush()
+    # writer.flush()
     writer.close()
 
     time_stamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     Path('models').mkdir(parents=True, exist_ok=True)
-    torch.save(cnn.state_dict(), f'models/{time_stamp}.pt')
+    torch.save(net.state_dict(), f'models/{time_stamp}.pt')
+
+
+def train_auto_encoder(device, train_set, val_set, num_epochs, batch_size, net, writer_path):
+    train_loader = DataLoader(train_set, batch_size, shuffle=True)
+    val_loader = DataLoader(val_set, len(val_set), shuffle=True)
+
+    net.to(device)
+
+    optimizer = optim.Adam(net.parameters())
+    criterion = nn.MSELoss()
+    writer = SummaryWriter(writer_path)
+
+    for epoch in trange(num_epochs):
+        epoch_loss = 0
+
+        for i, (inputs, _) in enumerate(train_loader):
+            inputs = inputs.to(device)
+
+            optimizer.zero_grad()
+            out = net(inputs)
+            loss = criterion(out, inputs)
+
+            epoch_loss += loss
+
+            loss.backward()
+            optimizer.step()
+
+        epoch_loss /= (i + 1)
+        print(f'epoch_loss: {epoch_loss}')
+        writer.add_scalar('Loss/train', epoch_loss, epoch)
+
+        # validate every 5 epochs
+        if (epoch + 1) % 5 == 0:
+            # NOTE: Since I set only one batch for validation, the for loop
+            # is only for one iteration
+            for val_inputs, _ in val_loader:
+                val_inputs = val_inputs.to(device)
+
+                val_out = net(val_inputs)
+                val_loss = criterion(val_inputs, val_out)
+
+            writer.add_scalar('Loss/val', val_loss, epoch)
+
+    # writer.flush()
+    writer.close()
+
+    time_stamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    Path('models').mkdir(parents=True, exist_ok=True)
+    torch.save(net.state_dict(), f'models/auto-encoder-{time_stamp}.pt')
 
 
 if __name__ == '__main__':
@@ -229,7 +290,7 @@ if __name__ == '__main__':
     np.random.seed(0)
 
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    num_epochs = 500
+    num_epochs = 200
     batch_size = 10
 
     lengths = [2795, 350, 349]
@@ -243,3 +304,8 @@ if __name__ == '__main__':
     train_set, val_set, test_set = torch.utils.data.random_split(dataset, lengths)
     cnn = MyCNN()
     train(device, train_set, val_set, num_epochs, batch_size, cnn, 'runs/cnn')
+
+    # dataset = MelDataset(False)
+    # train_set, val_set, test_set = torch.utils.data.random_split(dataset, lengths)
+    # auto_encoder = MyAutoEncoder()
+    # train_auto_encoder(device, train_set, val_set, num_epochs, batch_size, auto_encoder, 'runs/auto_encoder')
