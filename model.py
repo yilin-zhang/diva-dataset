@@ -9,10 +9,11 @@ import numpy as np
 from tqdm import trange
 from pathlib import Path
 from datetime import datetime
+import sys
 
 
 class MelDataset(Dataset):
-    def __init__(self, flat=False):
+    def __init__(self, flat=False, normalize=True):
         with open('dataset/mel.pkl', 'rb') as f:
             features = pickle.load(f)
 
@@ -21,8 +22,14 @@ class MelDataset(Dataset):
 
         self.labels = labels
 
+        if normalize:
+            features = torch.log(features+1)
+            maxes, _ = torch.max(features.view(features.size(0), -1), dim=1)
+            maxes = maxes.view(maxes.size(0), 1, 1)
+            features /= maxes
+
         if flat:
-            self.features = torch.reshape(
+            self.feature = torch.reshape(
                 features,
                 shape=(features.size(0),
                        features.size(1) * features.size(2)))
@@ -40,9 +47,9 @@ class MelDataset(Dataset):
 
 
 # DNN (linear)
-class MyDNN(nn.Module):
+class DivaDNN(nn.Module):
     def __init__(self):
-        super(MyDNN, self).__init__()
+        super(DivaDNN, self).__init__()
         self.lin1 = nn.Linear(8320, 4096, bias=True)
         self.bn1 = nn.BatchNorm1d(4096)
         self.lin2 = nn.Linear(4096, 2048, bias=True)
@@ -83,9 +90,9 @@ class MyDNN(nn.Module):
         return x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
 
 
-class MyCNN(nn.Module):
+class DivaCNN(nn.Module):
     def __init__(self):
-        super(MyCNN, self).__init__()
+        super(DivaCNN, self).__init__()
         self.conv1 = nn.Conv2d(1, 16, 3)  # dilation is not added here
         self.bn1 = nn.BatchNorm2d(16)
         self.pool1 = nn.MaxPool2d(2, stride=2)
@@ -138,9 +145,9 @@ class MyCNN(nn.Module):
         return x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
 
 
-class MyAutoEncoder(nn.Module):
+class DivaAutoEncoder(nn.Module):
     def __init__(self):
-        super(MyAutoEncoder, self).__init__()
+        super(DivaAutoEncoder, self).__init__()
         self.encoder = nn.Sequential( # like the Composition layer you built
             nn.Conv2d(1, 16, 3, padding=1),
             nn.ReLU(),
@@ -295,17 +302,22 @@ if __name__ == '__main__':
 
     lengths = [2795, 350, 349]
 
-    # dataset = MelDataset(True)
-    # train_set, val_set, test_set = torch.utils.data.random_split(dataset, lengths)
-    # dnn = MyDNN()
-    # train(device, train_set, val_set, num_epochs, batch_size, dnn, 'runs/dnn')
+    model_name = sys.argv[1]
 
-    dataset = MelDataset(False)
-    train_set, val_set, test_set = torch.utils.data.random_split(dataset, lengths)
-    cnn = MyCNN()
-    train(device, train_set, val_set, num_epochs, batch_size, cnn, 'runs/cnn')
+    if model_name == 'dnn':
+        dataset = MelDataset(flat=True)
+        train_set, val_set, test_set = torch.utils.data.random_split(dataset, lengths)
+        dnn = DivaDNN()
+        train(device, train_set, val_set, num_epochs, batch_size, dnn, 'runs/dnn')
 
-    # dataset = MelDataset(False)
-    # train_set, val_set, test_set = torch.utils.data.random_split(dataset, lengths)
-    # auto_encoder = MyAutoEncoder()
-    # train_auto_encoder(device, train_set, val_set, num_epochs, batch_size, auto_encoder, 'runs/auto_encoder')
+    elif model_name == 'cnn':
+        dataset = MelDataset(flat=False)
+        train_set, val_set, test_set = torch.utils.data.random_split(dataset, lengths)
+        cnn = DivaCNN()
+        train(device, train_set, val_set, num_epochs, batch_size, cnn, 'runs/cnn')
+
+    elif model_name == 'ae':
+        dataset = MelDataset(flat=False)
+        train_set, val_set, test_set = torch.utils.data.random_split(dataset, lengths)
+        auto_encoder = DivaAutoEncoder()
+        train_auto_encoder(device, train_set, val_set, num_epochs, batch_size, auto_encoder, 'runs/auto_encoder')
