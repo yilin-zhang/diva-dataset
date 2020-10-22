@@ -76,17 +76,17 @@ class DivaDNN(nn.Module):
         x = F.relu(self.bn2(self.lin2(x)))
         x = F.relu(self.bn3(self.lin3(x)))
         x = F.relu(self.bn4(self.lin4(x)))
-        x1 = self.softmax(self.lin5_1(x))
-        x2 = self.softmax(self.lin5_2(x))
-        x3 = self.softmax(self.lin5_3(x))
-        x4 = self.softmax(self.lin5_4(x))
-        x5 = self.softmax(self.lin5_5(x))
-        x6 = self.softmax(self.lin5_6(x))
-        x7 = self.softmax(self.lin5_7(x))
-        x8 = self.softmax(self.lin5_8(x))
-        x9 = self.softmax(self.lin5_9(x))
-        x10 = self.softmax(self.lin5_10(x))
-        x11 = self.softmax(self.lin5_11(x))
+        x1 = self.lin5_1(x)
+        x2 = self.lin5_2(x)
+        x3 = self.lin5_3(x)
+        x4 = self.lin5_4(x)
+        x5 = self.lin5_5(x)
+        x6 = self.lin5_6(x)
+        x7 = self.lin5_7(x)
+        x8 = self.lin5_8(x)
+        x9 = self.lin5_9(x)
+        x10 = self.lin5_10(x)
+        x11 = self.lin5_11(x)
         return x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
 
 
@@ -120,8 +120,6 @@ class DivaCNN(nn.Module):
         self.fc2_10 = nn.Linear(64, 3, bias=True)
         self.fc2_11 = nn.Linear(64, 3, bias=True)
 
-        self.softmax = nn.Softmax(dim=1)
-
     def forward(self, x):
         x = self.drp(self.pool1(F.relu(self.bn1(self.conv1(x)))))
         x = self.drp(F.relu(self.bn2(self.conv2(x))))
@@ -130,17 +128,18 @@ class DivaCNN(nn.Module):
         x = self.drp(self.pool2(F.relu(self.bn5(self.conv5(x)))))
         x = x.view(-1, 64*6*2)
         x = self.fc1(x)
-        x1 = self.softmax(self.fc2_1(x))
-        x2 = self.softmax(self.fc2_2(x))
-        x3 = self.softmax(self.fc2_3(x))
-        x4 = self.softmax(self.fc2_4(x))
-        x5 = self.softmax(self.fc2_5(x))
-        x6 = self.softmax(self.fc2_6(x))
-        x7 = self.softmax(self.fc2_7(x))
-        x8 = self.softmax(self.fc2_8(x))
-        x9 = self.softmax(self.fc2_9(x))
-        x10 = self.softmax(self.fc2_10(x))
-        x11 = self.softmax(self.fc2_11(x))
+
+        x1 = self.fc2_1(x)
+        x2 = self.fc2_2(x)
+        x3 = self.fc2_3(x)
+        x4 = self.fc2_4(x)
+        x5 = self.fc2_5(x)
+        x6 = self.fc2_6(x)
+        x7 = self.fc2_7(x)
+        x8 = self.fc2_8(x)
+        x9 = self.fc2_9(x)
+        x10 = self.fc2_10(x)
+        x11 = self.fc2_11(x)
 
         return x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
 
@@ -148,20 +147,25 @@ class DivaCNN(nn.Module):
 class DivaAutoEncoder(nn.Module):
     def __init__(self):
         super(DivaAutoEncoder, self).__init__()
-        self.encoder = nn.Sequential( # like the Composition layer you built
-            nn.Conv2d(1, 16, 3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(16, 32, 3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, 7)
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 22, 22
+            nn.ReLU(True),
+            nn.MaxPool2d(2, stride=2),  # b, 16, 11, 11
+            nn.Conv2d(16, 8, 3, stride=2, padding=1),  # b, 8, 6, 6
+            nn.ReLU(True),
+            nn.MaxPool2d(2, stride=1),  # b, 8, 5, 5
+            nn.Conv2d(8, 4, 3, stride=2, padding=1),  # b, 4, 3, 3
+            nn.MaxPool2d(2, stride=1),  # b, 4, 2, 2
         )
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(64, 32, 7),
-            nn.ReLU(),
-            nn.ConvTranspose2d(32, 16, 3, padding=1),
-            nn.ReLU(),
-            nn.ConvTranspose2d(16, 1, 3, padding=1),
-            nn.Sigmoid()
+            nn.ConvTranspose2d(4, 8, 3, stride=2),  # b, 8, 5, 5
+            nn.ReLU(True),
+            nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 11, 11
+            nn.ReLU(True),
+            nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 33, 33
+            nn.ReLU(True),
+            nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 64, 64
+            nn.Tanh()
         )
 
     def forward(self, x):

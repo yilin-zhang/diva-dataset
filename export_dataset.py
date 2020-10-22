@@ -117,7 +117,7 @@ def dump_features():
         pickle.dump(binary_characters, f)
 
 
-def export_audio():
+def export_audio_dataset():
     path_prefix = '/Users/naotake/Datasets/diva/'
     dataset_prefix = 'diva-preset-audio-dataset'
 
@@ -165,4 +165,4 @@ def export_audio():
 
 if __name__ == '__main__':
     # dump_features()
-    export_audio()
+    export_audio_dataset()

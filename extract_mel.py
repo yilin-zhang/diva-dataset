@@ -78,10 +78,13 @@ def encode_dataset(dataset_path):
                 sample_rate=22050,
                 f_min=30,
                 f_max=11000,
+                n_mels=64,
                 n_fft=2048,
                 hop_length=2048//2
             )(waveform)
             mel = mel[0].numpy()
+            # chop off the right-most column to make it 64x64
+            mel = mel[:, :-1]
             mel_list.append(mel)
 
             print("Iteration:", i)
