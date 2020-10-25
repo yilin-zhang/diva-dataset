@@ -4,6 +4,7 @@ import csv
 import scipy.io.wavfile
 import os
 from pathlib import Path
+import shutil
 
 import librenderman as rm
 from dataset_parser import get_patch, character_to_binary
@@ -122,6 +123,7 @@ def export_audio_dataset():
     dataset_prefix = 'diva-preset-audio-dataset'
 
     Path(dataset_prefix).mkdir(parents=True, exist_ok=True)
+    shutil.copy('dataset-readme.md', os.path.join(dataset_prefix, 'readme.md'))
     with open(os.path.join(dataset_prefix, 'meta.csv'), 'w') as csvfile:
         meta_writer = csv.writer(csvfile)
         meta_writer.writerow(["Bright", "Dark", "Dynamic", "Static",
