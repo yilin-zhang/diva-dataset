@@ -295,3 +295,6 @@ CHARACTER_TABLE = (("Bright", "Dark"),
                    ("Modern", "Vintage"),
                    ("Acoustic", "Electric"),
                    ("Natural", "Synthetic"))
+
+DATASET_PATH = 'diva-preset-audio-dataset'
+EXPORT_DIR = 'dataset'

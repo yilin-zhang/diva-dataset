@@ -1,8 +1,9 @@
 from config import PARAM_DICT, DEFAULT_PARAMS, CHARACTER_TABLE
 import json
+from typing import List, Tuple
 
 
-def get_patch(dataset_path):
+def get_patch(dataset_path: str) -> Tuple[List[Tuple[int, float]], str, List[str]]:
     with open(dataset_path) as f:
         data = json.load(f)
         for preset in data.values():
@@ -27,7 +28,7 @@ def get_patch(dataset_path):
             yield patch, path, character
 
 
-def character_to_binary(character):
+def character_to_binary(character: List[str]) -> List[int]:
     ''' Convert a list of descriptors into a binary list
     Arg:
     - character: a list of character parsed from the dataset

@@ -5,6 +5,7 @@ import os
 import csv
 import pickle
 from pathlib import Path
+from config import DATASET_PATH, EXPORT_DIR
 
 
 def transform_diva_labels(label_array):
@@ -94,8 +95,6 @@ def encode_dataset(dataset_path):
 
 
 if __name__ == '__main__':
-    DATASET_PATH = 'diva-preset-audio-dataset'
-    EXPORT_DIR = 'dataset'
     mel, labels = encode_dataset(DATASET_PATH)
 
     # Dump the data
