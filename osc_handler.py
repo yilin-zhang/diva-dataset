@@ -7,6 +7,8 @@ from pythonosc import udp_client
 from pythonosc import osc_server
 from pythonosc import dispatcher
 
+from audio_feature_extractor import AudioFeatureExtractor
+
 
 class OSCHandler:
     def __init__(self):
@@ -48,13 +50,25 @@ def get_random_patch_callback(address: str, args: List[Any], *osc_args: List[Any
         client.send_message("/Ideator/cpp/set_parameter", random_patch)
 
 
+def render_audio_callback(address: str, args: List[Any], *osc_args: List[Any]) -> None:
+    client = args[0]
+    feature_extractor = args[1]
+    value = osc_args[0]
+    # print(f'address: {address}')
+    audio_path = address[len("/Ideator/python/render_audio/"):]
+    print(f'audio_path: {audio_path}')
+    feature_extractor.encode(audio_path)
+
+
 if __name__ == "__main__":
     dispatcher = dispatcher.Dispatcher()
     client = udp_client.SimpleUDPClient(address="127.0.0.1", port=9001)
     osc_handler = OSCHandler()
+    feature_extractor = AudioFeatureExtractor('models/auto-encoder-20201020050003.pt') # NOTE: hard coded here
 
     dispatcher.map("/Ideator/python/num_parameters", set_num_parameters_callback, osc_handler)
     dispatcher.map("/Ideator/python/get_random_patch", get_random_patch_callback, client, osc_handler)
+    dispatcher.map("/Ideator/python/render_audio/*", render_audio_callback, osc_handler, feature_extractor)
 
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 7777), dispatcher)
     print("Serving on {}".format(server.server_address))
