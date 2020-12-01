@@ -39,8 +39,11 @@ class MelDataset(Dataset):
                                                      features.size(1),
                                                      features.size(2)))
 
+        with open('dataset/paths.pkl', 'rb') as f:
+            self.paths = pickle.load(f)
+
     def __getitem__(self, index):
-        return self.features[index], self.labels[index]
+        return self.features[index], self.labels[index], self.paths[index]
 
     def __len__(self):
         return self.features.size(0)
@@ -192,7 +195,7 @@ def train(device, train_set, val_set, num_epochs, batch_size, net, writer_path):
 
     for epoch in trange(num_epochs):
         epoch_loss = 0
-        for i, (inputs, labels) in enumerate(train_loader):
+        for i, (inputs, labels, _) in enumerate(train_loader):
             inputs = inputs.to(device)
             labels = labels.to(device)
 
@@ -260,7 +263,7 @@ def train_auto_encoder(device, train_set, val_set, num_epochs, batch_size, net, 
     for epoch in trange(num_epochs):
         epoch_loss = 0
 
-        for i, (inputs, _) in enumerate(train_loader):
+        for i, (inputs, _, _) in enumerate(train_loader):
             inputs = inputs.to(device)
 
             optimizer.zero_grad()

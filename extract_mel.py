@@ -57,6 +57,7 @@ def encode_dataset(dataset_path):
 
     mel_list = []
     encoded_label_list = []
+    path_list = []
     with open(csv_path, 'r') as csvfile:
         meta_reader = csv.reader(csvfile)
         next(meta_reader)
@@ -65,6 +66,7 @@ def encode_dataset(dataset_path):
             labels = np.array(row[:-1], dtype=np.uint8)
             audio_path = os.path.join(dataset_path, row[-1])
             print(audio_path)
+            path_list.append(audio_path)
 
             # process labels
             encoded_label_list.append(transform_diva_labels(labels))
@@ -91,15 +93,16 @@ def encode_dataset(dataset_path):
             print("Iteration:", i)
             i += 1
 
-    return torch.tensor(mel_list), torch.tensor(encoded_label_list)
+    return torch.tensor(mel_list), torch.tensor(encoded_label_list), path_list
 
 
 if __name__ == '__main__':
-    mel, labels = encode_dataset(DATASET_PATH)
+    mel, labels, paths = encode_dataset(DATASET_PATH)
 
     # Dump the data
     print('size of mel matrix:', mel.shape)
     print('size of labels matrix:', labels.shape)
+    print('size of path list:', len(paths))
 
     Path(EXPORT_DIR).mkdir(parents=True, exist_ok=True)
     # Dump the data
@@ -108,3 +111,6 @@ if __name__ == '__main__':
 
     with open(os.path.join(EXPORT_DIR, 'labels.pkl'), 'wb') as f:
         pickle.dump(labels, f)
+
+    with open(os.path.join(EXPORT_DIR, 'paths.pkl'), 'wb') as f:
+        pickle.dump(paths, f)

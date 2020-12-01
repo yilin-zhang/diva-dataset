@@ -8,6 +8,7 @@ from pythonosc import osc_server
 from pythonosc import dispatcher
 
 from audio_feature_extractor import AudioFeatureExtractor
+from model import MelDataset
 
 
 class OSCHandler:
@@ -65,6 +66,9 @@ if __name__ == "__main__":
     client = udp_client.SimpleUDPClient(address="127.0.0.1", port=9001)
     osc_handler = OSCHandler()
     feature_extractor = AudioFeatureExtractor('models/auto-encoder-20201020050003.pt') # NOTE: hard coded here
+    # TODO: maybe put this into the constructor?
+    dataset = MelDataset(flat=False)
+    feature_extractor.encode_dataset(dataset)
 
     dispatcher.map("/Ideator/python/num_parameters", set_num_parameters_callback, osc_handler)
     dispatcher.map("/Ideator/python/get_random_patch", get_random_patch_callback, client, osc_handler)

@@ -25,7 +25,7 @@ def get_latent(device, net, features: torch.tensor) -> np.ndarray:
     data_loader = DataLoader(features, batch_size, shuffle=False)
     net.to(device)
     latent_batches = []
-    for i, (inputs, labels) in enumerate(data_loader):
+    for i, (inputs, labels, _) in enumerate(data_loader):
         inputs = inputs.to(device)
         latent = net.encode(inputs)
         latent_batches.append(latent)
