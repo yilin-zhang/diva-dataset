@@ -16,10 +16,7 @@ class AudioFeatureExtractor:
         self.paths = None       # np.ndarray
         self.latent_mat = None  # np.ndarray
 
-    def encode(self, audio_path):
-        # Extract the mel spectrogram
-        # this step is the same as in `extract_mel.py`
-        waveform, _ = torchaudio.load(audio_path)
+    def encode(self, waveform: torch.tensor) -> torch.tensor:
         waveform = torchaudio.transforms.Resample(
             orig_freq=44100,
             new_freq=22050
@@ -46,6 +43,14 @@ class AudioFeatureExtractor:
         # encode it into the latent space
         latent = self.model.encode(mel)
         latent = torch.reshape(latent, (1, -1)).detach().numpy()
+
+        return latent
+
+    def encode_from_path(self, audio_path):
+        # Extract the mel spectrogram
+        # this step is the same as in `extract_mel.py`
+        waveform, _ = torchaudio.load(audio_path)
+        latent = self.encode(waveform)
         print(latent)
 
         selected_presets = self._retrieve_presets(latent)
